@@ -1,0 +1,12 @@
+# node_modules (carpeta de dependencias)
+node_modules/
+
+# variables de entorno sensibles
+.env
+
+# logs
+*.log
+
+# sistema operativo
+.DS_Store
+Thumbs.db
