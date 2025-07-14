@@ -326,7 +326,7 @@ app.get('/api/historial-stock', async (req, res) => {
         a.fecha,
         'Abastecimiento' AS tipo,
         v.denominacion AS vehiculo,
-        a.kmactual AS odometro,
+        a.kmobtenido AS odometro,
         c.nombre AS chofer,
         NULL AS entrada,
         a.cantlitros AS salida,
@@ -345,6 +345,7 @@ app.get('/api/historial-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al cargar historial' });
   }
 });
+
 
 
 
