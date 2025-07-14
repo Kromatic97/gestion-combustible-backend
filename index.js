@@ -216,9 +216,7 @@ app.get('/api/tiposvehiculo', async (req, res) => {
   }
 });
 
-// ============================
-// Registrar nuevo vehículo
-// ============================
+
 // ============================
 // Registrar nuevo vehículo
 // ============================
@@ -238,6 +236,31 @@ app.post('/api/vehiculos', async (req, res) => {
   }
 });
 
+// ============================
+// Registrar nuevo chofer
+// ============================
+app.post('/api/choferes', async (req, res) => {
+  const { nombre } = req.body;
+
+  if (!nombre) {
+    return res.status(400).json({ error: 'Falta el nombre del chofer' });
+  }
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO chofer (nombre) VALUES ($1) RETURNING choferid',
+      [nombre]
+    );
+
+    res.status(201).json({
+      mensaje: 'Chofer registrado correctamente',
+      choferID: result.rows[0].choferid
+    });
+  } catch (error) {
+    console.error('Error al registrar chofer:', error);
+    res.status(500).json({ error: 'Error al registrar chofer' });
+  }
+});
 
 
 
