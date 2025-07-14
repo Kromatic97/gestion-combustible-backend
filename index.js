@@ -216,6 +216,30 @@ app.get('/api/tiposvehiculo', async (req, res) => {
   }
 });
 
+// ============================
+// Registrar nuevo vehículo
+// ============================
+// ============================
+// Registrar nuevo vehículo
+// ============================
+app.post('/api/vehiculos', async (req, res) => {
+  const { denominacion, kilometraje, marcaid, modeloid, tipovehiculoid } = req.body;
+
+  try {
+    await pool.query(`
+      INSERT INTO vehiculo (denominacion, kilometrajeodometro, marcaid, modeloid, tipovehiculoid)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [denominacion, kilometraje, marcaid, modeloid, tipovehiculoid]);
+
+    res.status(201).json({ mensaje: 'Vehículo registrado exitosamente' });
+  } catch (error) {
+    console.error('Error al registrar vehículo:', error);
+    res.status(500).json({ error: 'Error al registrar vehículo' });
+  }
+});
+
+
+
 
 
 
