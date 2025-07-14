@@ -300,67 +300,66 @@ app.post('/api/recarga-stock', async (req, res) => {
   }
 });
 
-/* ============================
-   GET: Historial Moviento
-=============================== */
+// ============================
+// GET HISTORIAL
+// ============================
 
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-WITH movimientos AS (
-  SELECT 
-    r.fecha AS fechatransaccion,
-    'Recarga' AS tipo,
-    '-' AS vehiculo,
-    '-' AS kilometraje,
-    c.nombre AS chofer,
-    r.cantlitros AS litrosentrada,
-    0::numeric AS litrossalida
-  FROM recargastock r
-  JOIN chofer c ON r.choferid = c.choferid
+      WITH movimientos AS (
+        SELECT 
+          r.fecha AS fechatransaccion,
+          'Recarga' AS tipo,
+          '-' AS vehiculo,
+          '-' AS kilometraje,
+          c.nombre AS chofer,
+          r.cantlitros::numeric AS litrosentrada,
+          0::numeric AS litrossalida
+        FROM recargastock r
+        JOIN chofer c ON r.choferid = c.choferid
 
-  UNION ALL
+        UNION ALL
 
-  SELECT 
-    a.fecha AS fechatransaccion,
-    'Abastecimiento' AS tipo,
-    v.denominacion AS vehiculo,
-    a.kilometrajeactual::text AS kilometraje,
-    c.nombre AS chofer,
-    0::numeric AS litrosentrada,
-    a.cant_litros AS litrossalida
-  FROM abastecimiento a
-  JOIN chofer c ON a.choferid = c.choferid
-  JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-)
+        SELECT 
+          a.fecha AS fechatransaccion,
+          'Abastecimiento' AS tipo,
+          v.denominacion AS vehiculo,
+          a.kilometrajeactual::text AS kilometraje,
+          c.nombre AS chofer,
+          0::numeric AS litrosentrada,
+          a.cant_litros::numeric AS litrossalida
+        FROM abastecimiento a
+        JOIN chofer c ON a.choferid = c.choferid
+        JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+      )
 
-SELECT 
-  fechatransaccion,
-  tipo,
-  vehiculo,
-  kilometraje,
-  chofer,
-  -- ✅ Formateamos entrada y salida
-  CASE 
-    WHEN litrosentrada > 0 THEN TO_CHAR(litrosentrada, 'FM999G999D00')
-    ELSE '-' 
-  END AS entrada,
-  CASE 
-    WHEN litrossalida > 0 THEN TO_CHAR(litrossalida, 'FM999G999D00')
-    ELSE '-' 
-  END AS salida,
+      SELECT 
+        fechatransaccion,
+        tipo,
+        vehiculo,
+        kilometraje,
+        chofer,
+        -- ✅ Entrada formateada
+        CASE 
+          WHEN litrosentrada > 0 THEN TO_CHAR(litrosentrada, 'FM999G999D00')
+          ELSE '-' 
+        END AS entrada,
 
-  -- ✅ Stock acumulado con formato
-  TO_CHAR(SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion), 'FM999G999D00') AS stock
+        -- ✅ Salida formateada
+        CASE 
+          WHEN litrossalida > 0 THEN TO_CHAR(litrossalida, 'FM999G999D00')
+          ELSE '-' 
+        END AS salida,
 
-FROM movimientos
-ORDER BY fechatransaccion;
+        -- ✅ Stock acumulado con formato
+        TO_CHAR(
+          SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion)::numeric,
+          'FM999G999D00'
+        ) AS stock
 
-
-
-
-
-
+      FROM movimientos
+      ORDER BY fechatransaccion;
     `);
 
     res.json(rows);
