@@ -307,36 +307,36 @@ app.post('/api/recarga-stock', async (req, res) => {
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT
-        r.fecha,
-        'Recarga' AS tipo,
-        NULL AS vehiculo,
-        NULL AS odometro,
-        c.nombre AS chofer,
-        r.cantlitros AS entrada,
-        NULL AS salida,
-        s.litroactual AS stock
-      FROM recargastock r
-      JOIN chofer c ON r.choferid = c.choferid
-      JOIN stockcombustible s ON s.fechatransaccion = r.fecha
+    SELECT
+  r.fecha,
+  'Recarga' AS tipo,
+  NULL AS vehiculo,
+  NULL AS odometro,
+  c.nombre AS chofer,
+  r.cantlitros AS entrada,
+  NULL AS salida,
+  s.litroactual AS stock
+FROM recargastock r
+JOIN chofer c ON r.choferid = c.choferid
+JOIN stockcombustible s ON s.fechatransaccion = r.fecha
 
-      UNION
+UNION
 
-      SELECT
-        a.fecha,
-        'Abastecimiento' AS tipo,
-        v.denominacion AS vehiculo,
-        a.kmobtenido AS odometro,
-        c.nombre AS chofer,
-        NULL AS entrada,
-        a.cantlitros AS salida,
-        s.litroactual AS stock
-      FROM abastecimiento a
-      JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-      JOIN chofer c ON a.choferid = c.choferid
-      JOIN stockcombustible s ON s.fechatransaccion = a.fecha
+SELECT
+  a.fecha,
+  'Abastecimiento' AS tipo,
+  v.denominacion AS vehiculo,
+  a.kilometrajeactual AS odometro,
+  c.nombre AS chofer,
+  NULL AS entrada,
+  a.cant_litros AS salida,
+  s.litroactual AS stock
+FROM abastecimiento a
+JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+JOIN chofer c ON a.choferid = c.choferid
+JOIN stockcombustible s ON s.fechatransaccion = a.fecha
 
-      ORDER BY fecha DESC;
+ORDER BY fecha DESC;
     `);
 
     res.json(rows);
