@@ -313,7 +313,7 @@ SELECT
   '' AS vehiculo,
   NULL AS kilometraje,
   c.nombre AS chofer,
-  REPLACE(REPLACE(TO_CHAR(r.cantlitros, 'FM999G999D00'), ',', 'X'), '.', ',') AS litrosentrada,
+  REPLACE(REPLACE(TO_CHAR(r.cantlitros, 'FM999G999D00'), ',', '.'), '.', ',') AS litrosentrada,
   NULL AS litrossalida,
   NULL AS stock
 FROM recargastock r
@@ -328,7 +328,7 @@ SELECT
   a.kilometrajeactual AS kilometraje,
   c.nombre AS chofer,
   NULL AS litrosentrada,
-  REPLACE(REPLACE(TO_CHAR(a.cant_litros, 'FM999G999D00'), ',', 'X'), '.', ',') AS litrossalida,
+  REPLACE(REPLACE(TO_CHAR(a.cant_litros, 'FM999G999D00'), ',', '.'), '.', ',') AS litrossalida,
   NULL AS stock
 FROM abastecimiento a
 JOIN chofer c ON a.choferid = c.choferid
