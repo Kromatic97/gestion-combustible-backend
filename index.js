@@ -300,6 +300,51 @@ app.post('/api/recarga-stock', async (req, res) => {
   }
 });
 
+/* ============================
+   GET: Historial Moviento
+=============================== */
+
+app.get('/api/historial-stock', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        r.fecha,
+        'Recarga' AS tipo,
+        NULL AS vehiculo,
+        NULL AS odometro,
+        c.nombre AS chofer,
+        r.cantlitros AS entrada,
+        NULL AS salida,
+        s.litroactual AS stock
+      FROM recargastock r
+      JOIN chofer c ON r.choferid = c.choferid
+      JOIN stockcombustible s ON s.fechatransaccion = r.fecha
+
+      UNION
+
+      SELECT
+        a.fecha,
+        'Abastecimiento' AS tipo,
+        v.denominacion AS vehiculo,
+        a.kmactual AS odometro,
+        c.nombre AS chofer,
+        NULL AS entrada,
+        a.cantlitros AS salida,
+        s.litroactual AS stock
+      FROM abastecimiento a
+      JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+      JOIN chofer c ON a.choferid = c.choferid
+      JOIN stockcombustible s ON s.fechatransaccion = a.fecha
+
+      ORDER BY fecha DESC;
+    `);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al cargar historial:', error);
+    res.status(500).json({ error: 'Error al cargar historial' });
+  }
+});
 
 
 
