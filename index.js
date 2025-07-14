@@ -1,25 +1,5 @@
-{/*const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-
-dotenv.config();
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("API de gestión de combustible funcionando ✅");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
-});*/}
-
 const express = require('express');
 const cors = require('cors');
-//const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 require('dotenv').config(); // Cargar variables del archivo .env
 
@@ -35,12 +15,90 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+
 app.use(express.json());
 app.use(cors());
-//app.use(bodyParser.json());
 
 /* ============================
-   1. Registrar abastecimiento
+   GET: Vehículos
+=============================== */
+app.get('/api/vehiculos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM Vehiculo');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener vehículos:', error);
+    res.status(500).json({ error: 'Error al obtener vehículos' });
+  }
+});
+
+/* ============================
+   GET: Choferes
+=============================== */
+app.get('/api/choferes', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM Chofer');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener choferes:', error);
+    res.status(500).json({ error: 'Error al obtener choferes' });
+  }
+});
+
+/* ============================
+   GET: Lugares
+=============================== */
+app.get('/api/lugares', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM Lugar');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener lugares:', error);
+    res.status(500).json({ error: 'Error al obtener lugares' });
+  }
+});
+
+/* ============================
+   GET: Stock actual
+=============================== */
+app.get('/api/stock', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT LitroActual
+      FROM StockCombustible
+      ORDER BY FechaTransaccion DESC
+      LIMIT 1
+    `);
+    res.json(result.rows[0] || { litroactual: 10000 });
+  } catch (error) {
+    console.error('Error al obtener stock:', error);
+    res.status(500).json({ error: 'Error al obtener stock' });
+  }
+});
+
+/* ============================
+   GET: Abastecimientos (últimos 20)
+=============================== */
+app.get('/api/abastecimientos', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT a.*, v.Denominacion AS Vehiculo, c.NombreChofer AS Chofer, l.NombreLugar AS Lugar
+      FROM Abastecimiento a
+      JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
+      JOIN Chofer c ON c.ChoferID = a.ChoferID
+      JOIN Lugar l ON l.LugarID = a.LugarID
+      ORDER BY a.Fecha DESC
+      LIMIT 20
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener abastecimientos:', error);
+    res.status(500).json({ error: 'Error al obtener abastecimientos' });
+  }
+});
+
+/* ============================
+   POST: Registrar abastecimiento
 =============================== */
 app.post('/api/abastecimientos', async (req, res) => {
   const client = await pool.connect();
@@ -111,13 +169,12 @@ app.post('/api/abastecimientos', async (req, res) => {
   }
 });
 
-// 🔽 ... todas tus otras rutas permanecen iguales ...
-
 /* ============================
-   Última línea: iniciar servidor
+   Iniciar servidor
 =============================== */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
+
 
