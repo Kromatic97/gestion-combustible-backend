@@ -307,36 +307,53 @@ app.post('/api/recarga-stock', async (req, res) => {
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-    SELECT
-  r.fecha,
-  'Recarga' AS tipo,
-  NULL AS vehiculo,
-  NULL AS odometro,
-  c.nombre AS chofer,
-  r.cantlitros AS entrada,
-  NULL AS salida,
-  s.litroactual AS stock
-FROM recargastock r
-JOIN chofer c ON r.choferid = c.choferid
-JOIN stockcombustible s ON s.fechatransaccion = r.fecha
+   SELECT *
+FROM (
+  -- Recargas de stock (tipo entrada)
+  SELECT 
+    TO_CHAR(r.fecha, 'DD/MM/YYYY HH24:MI') AS fecha,
+    'Recarga' AS tipo,
+    '-' AS vehiculo,
+    '-' AS odometro,
+    c.nombre AS chofer,
+    TO_CHAR(r.cantlitros, 'FM999G999G990D00') AS entrada,
+    '-' AS salida,
+    '-' AS stock
+  FROM recargastock r
+  JOIN chofer c ON r.choferid = c.choferid
 
-UNION
+  UNION
 
-SELECT
-  a.fecha,
-  'Abastecimiento' AS tipo,
-  v.denominacion AS vehiculo,
-  a.kilometrajeactual AS odometro,
-  c.nombre AS chofer,
-  NULL AS entrada,
-  a.cant_litros AS salida,
-  s.litroactual AS stock
-FROM abastecimiento a
-JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-JOIN chofer c ON a.choferid = c.choferid
-JOIN stockcombustible s ON s.fechatransaccion = a.fecha
+  -- Abastecimientos (tipo salida)
+  SELECT 
+    TO_CHAR(a.fecha, 'DD/MM/YYYY HH24:MI') AS fecha,
+    'Abastecimiento' AS tipo,
+    v.denominacion AS vehiculo,
+    TO_CHAR(a.kilometrajeactual, 'FM999G999G990D00') AS odometro,
+    c.nombre AS chofer,
+    '-' AS entrada,
+    TO_CHAR(a.cant_litros, 'FM999G999G990D00') AS salida,
+    '-' AS stock
+  FROM abastecimiento a
+  JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+  JOIN chofer c ON a.choferid = c.choferid
 
-ORDER BY fecha DESC;
+  UNION
+
+  -- Stock total
+  SELECT 
+    TO_CHAR(s.fechatransaccion, 'DD/MM/YYYY HH24:MI') AS fecha,
+    'Stock' AS tipo,
+    '-' AS vehiculo,
+    '-' AS odometro,
+    '-' AS chofer,
+    '-' AS entrada,
+    '-' AS salida,
+    TO_CHAR(s.litroactual, 'FM999G999G990D00') AS stock
+  FROM stockcombustible s
+) AS historial
+ORDER BY TO_TIMESTAMP(fecha, 'DD/MM/YYYY HH24:MI') DESC;
+
     `);
 
     res.json(rows);
