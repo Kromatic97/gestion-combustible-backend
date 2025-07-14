@@ -58,6 +58,35 @@ app.get('/api/lugares', async (req, res) => {
   }
 });
 
+// ============================
+// 2. Obtener lista de abastecimientos
+// ============================
+app.get('/api/abastecimientos', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.AbastecimientoID,
+        a.Fecha,
+        a.Cant_Litros,
+        a.KilometrajeActual,
+        v.Denominacion AS Vehiculo,
+        c.NombreChofer AS Chofer,
+        l.NombreLugar AS Lugar
+      FROM Abastecimiento a
+      JOIN Vehiculo v ON a.VehiculoID = v.VehiculoID
+      JOIN Chofer c ON a.ChoferID = c.ChoferID
+      JOIN Lugar l ON a.LugarID = l.LugarID
+      ORDER BY a.Fecha DESC
+      LIMIT 10
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener abastecimientos:', error);
+    res.status(500).json({ error: 'Error al obtener abastecimientos' });
+  }
+});
+
+
 /* ============================
    GET: Stock actual
 =============================== */
