@@ -309,7 +309,7 @@ app.get('/api/historial-stock', async (req, res) => {
     const { rows } = await pool.query(`
    SELECT *
 FROM (
-  -- Recargas de stock (tipo entrada)
+  -- Recargas de stock
   SELECT 
     TO_CHAR(r.fecha, 'DD/MM/YYYY HH24:MI') AS fecha,
     'Recarga' AS tipo,
@@ -324,7 +324,7 @@ FROM (
 
   UNION
 
-  -- Abastecimientos (tipo salida)
+  -- Abastecimientos
   SELECT 
     TO_CHAR(a.fecha, 'DD/MM/YYYY HH24:MI') AS fecha,
     'Abastecimiento' AS tipo,
@@ -340,7 +340,7 @@ FROM (
 
   UNION
 
-  -- Stock total
+  -- Registros de stock
   SELECT 
     TO_CHAR(s.fechatransaccion, 'DD/MM/YYYY HH24:MI') AS fecha,
     'Stock' AS tipo,
@@ -353,6 +353,7 @@ FROM (
   FROM stockcombustible s
 ) AS historial
 ORDER BY TO_TIMESTAMP(fecha, 'DD/MM/YYYY HH24:MI') DESC;
+
 
     `);
 
