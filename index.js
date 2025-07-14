@@ -66,7 +66,11 @@ app.get('/api/lugares', async (req, res) => {
 app.get('/api/abastecimientos', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT a.*, v.Denominacion AS Vehiculo, c.Nombre AS Chofer, l.NombreLugar AS Lugar
+      SELECT 
+        a.*,
+        v.Denominacion AS Vehiculo,
+        c.nombre AS Chofer,
+        l.NombreLugar AS Lugar
       FROM Abastecimiento a
       JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
       JOIN Chofer c ON c.ChoferID = a.ChoferID
@@ -80,6 +84,7 @@ app.get('/api/abastecimientos', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener abastecimientos' });
   }
 });
+
 
 
 /* ============================
@@ -173,6 +178,47 @@ app.post('/api/abastecimientos', async (req, res) => {
     client.release();
   }
 });
+
+// ============================
+// Rutas para Selects de Vehículo
+// ============================
+
+// Obtener marcas
+app.get('/api/marcas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT marcaid, descripcion FROM marca ORDER BY descripcion');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener marcas:', error);
+    res.status(500).json({ error: 'Error al obtener marcas' });
+  }
+});
+
+// Obtener modelos
+app.get('/api/modelos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT modeloid, nombremodelo FROM modelo ORDER BY nombremodelo');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener modelos:', error);
+    res.status(500).json({ error: 'Error al obtener modelos' });
+  }
+});
+
+// Obtener tipos de vehículo
+app.get('/api/tiposvehiculo', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT tipovehiculoid, tipovehiculo FROM tipovehiculo ORDER BY tipovehiculo');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener tipos de vehículo:', error);
+    res.status(500).json({ error: 'Error al obtener tipos de vehículo' });
+  }
+});
+
+
+
+
 
 /* ============================
    Iniciar servidor
