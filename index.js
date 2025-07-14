@@ -310,12 +310,13 @@ app.get('/api/historial-stock', async (req, res) => {
 SELECT 
   r.fecha AS fechatransaccion,
   'Recarga' AS tipo,
-  '' AS vehiculo,
-  NULL AS kilometraje,
+  '-' AS vehiculo,
+  '-' AS kilometraje,
   c.nombre AS chofer,
-  REPLACE(REPLACE(TO_CHAR(r.cantlitros, 'FM999G999D00'), ',', '.'), '.', ',') AS litrosentrada,
-  NULL AS litrossalida,
-  NULL AS stock
+  -- Entrada: 10.000,00
+  REPLACE(REPLACE(REPLACE(TO_CHAR(r.cantlitros, 'FM999G999D00'), ',', 'X'), '.', ','), 'X', '.') AS litrosentrada,
+  '-' AS litrossalida,
+  NULL::numeric AS stock
 FROM recargastock r
 JOIN chofer c ON r.choferid = c.choferid
 
@@ -325,16 +326,18 @@ SELECT
   a.fecha AS fechatransaccion,
   'Abastecimiento' AS tipo,
   v.denominacion AS vehiculo,
-  a.kilometrajeactual AS kilometraje,
+  a.kilometrajeactual::text AS kilometraje,
   c.nombre AS chofer,
-  NULL AS litrosentrada,
-  REPLACE(REPLACE(TO_CHAR(a.cant_litros, 'FM999G999D00'), ',', '.'), '.', ',') AS litrossalida,
-  NULL AS stock
+  '-' AS litrosentrada,
+  -- Salida: 60,00
+  REPLACE(REPLACE(REPLACE(TO_CHAR(a.cant_litros, 'FM999G999D00'), ',', 'X'), '.', ','), 'X', '.') AS litrossalida,
+  NULL::numeric AS stock
 FROM abastecimiento a
 JOIN chofer c ON a.choferid = c.choferid
 JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
 
 ORDER BY fechatransaccion;
+
 
 
 
