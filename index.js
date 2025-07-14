@@ -301,40 +301,64 @@ app.post('/api/recarga-stock', async (req, res) => {
 });
 
 // ============================
-// GET HISTORIAL
+// GET HISTORI
 // ============================
 
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
       WITH movimientos AS (
-  SELECT 
-    r.fecha AS fechatransaccion,
-    'Recarga' AS tipo,
-    '-' AS vehiculo,
-    '-' AS kilometraje,
-    c.nombre AS chofer,
-    REPLACE(r.cantlitros, ',', '.')::numeric AS litrosentrada,
-    0::numeric AS litrossalida
-  FROM recargastock r
-  JOIN chofer c ON r.choferid = c.choferid
+        SELECT 
+          r.fecha AS fechatransaccion,
+          'Recarga' AS tipo,
+          '-' AS vehiculo,
+          '-' AS kilometraje,
+          c.nombre AS chofer,
+          r.cantlitros::numeric AS litrosentrada,
+          0::numeric AS litrossalida
+        FROM recargastock r
+        JOIN chofer c ON r.choferid = c.choferid
 
-  UNION ALL
+        UNION ALL
 
-  SELECT 
-    a.fecha AS fechatransaccion,
-    'Abastecimiento' AS tipo,
-    v.denominacion AS vehiculo,
-    a.kilometrajeactual::text AS kilometraje,
-    c.nombre AS chofer,
-    0::numeric AS litrosentrada,
-    REPLACE(a.cant_litros, ',', '.')::numeric AS litrossalida
-  FROM abastecimiento a
-  JOIN chofer c ON a.choferid = c.choferid
-  JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-)
+        SELECT 
+          a.fecha AS fechatransaccion,
+          'Abastecimiento' AS tipo,
+          v.denominacion AS vehiculo,
+          a.kilometrajeactual::text AS kilometraje,
+          c.nombre AS chofer,
+          0::numeric AS litrosentrada,
+          a.cant_litros::numeric AS litrossalida
+        FROM abastecimiento a
+        JOIN chofer c ON a.choferid = c.choferid
+        JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+      )
 
-          FROM movimientos
+      SELECT 
+        fechatransaccion,
+        tipo,
+        vehiculo,
+        kilometraje,
+        chofer,
+        -- ✅ Entrada formateada
+        CASE 
+          WHEN litrosentrada > 0 THEN TO_CHAR(litrosentrada, 'FM999G999D00')
+          ELSE '-' 
+        END AS entrada,
+
+        -- ✅ Salida formateada
+        CASE 
+          WHEN litrossalida > 0 THEN TO_CHAR(litrossalida, 'FM999G999D00')
+          ELSE '-' 
+        END AS salida,
+
+        -- ✅ Stock acumulado con formato
+        TO_CHAR(
+          SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion)::numeric,
+          'FM999G999D00'
+        ) AS stock
+
+      FROM movimientos
       ORDER BY fechatransaccion;
     `);
 
@@ -344,6 +368,12 @@ app.get('/api/historial-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al cargar historial' });
   }
 });
+
+
+
+
+
+
 
 
 
