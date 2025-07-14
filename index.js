@@ -307,36 +307,55 @@ app.post('/api/recarga-stock', async (req, res) => {
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
+WITH movimientos AS (
+  SELECT 
+    r.fecha AS fechatransaccion,
+    'Recarga' AS tipo,
+    '-' AS vehiculo,
+    '-' AS kilometraje,
+    c.nombre AS chofer,
+    r.cantlitros AS litrosentrada,
+    0::numeric AS litrossalida
+  FROM recargastock r
+  JOIN chofer c ON r.choferid = c.choferid
+
+  UNION ALL
+
+  SELECT 
+    a.fecha AS fechatransaccion,
+    'Abastecimiento' AS tipo,
+    v.denominacion AS vehiculo,
+    a.kilometrajeactual::text AS kilometraje,
+    c.nombre AS chofer,
+    0::numeric AS litrosentrada,
+    a.cant_litros AS litrossalida
+  FROM abastecimiento a
+  JOIN chofer c ON a.choferid = c.choferid
+  JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+)
+
 SELECT 
-  r.fecha AS fechatransaccion,
-  'Recarga' AS tipo,
-  '-' AS vehiculo,
-  '-' AS kilometraje,
-  c.nombre AS chofer,
-  -- Entrada: 10.000,00
-  REPLACE(REPLACE(REPLACE(TO_CHAR(r.cantlitros, 'FM999G999D00'), ',', 'X'), '.', ','), 'X', '.') AS litrosentrada,
-  '-' AS litrossalida,
-  NULL::numeric AS stock
-FROM recargastock r
-JOIN chofer c ON r.choferid = c.choferid
+  fechatransaccion,
+  tipo,
+  vehiculo,
+  kilometraje,
+  chofer,
+  -- ✅ Formateamos entrada y salida
+  CASE 
+    WHEN litrosentrada > 0 THEN TO_CHAR(litrosentrada, 'FM999G999D00')
+    ELSE '-' 
+  END AS entrada,
+  CASE 
+    WHEN litrossalida > 0 THEN TO_CHAR(litrossalida, 'FM999G999D00')
+    ELSE '-' 
+  END AS salida,
 
-UNION ALL
+  -- ✅ Stock acumulado con formato
+  TO_CHAR(SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion), 'FM999G999D00') AS stock
 
-SELECT 
-  a.fecha AS fechatransaccion,
-  'Abastecimiento' AS tipo,
-  v.denominacion AS vehiculo,
-  a.kilometrajeactual::text AS kilometraje,
-  c.nombre AS chofer,
-  '-' AS litrosentrada,
-  -- Salida: 60,00
-  REPLACE(REPLACE(REPLACE(TO_CHAR(a.cant_litros, 'FM999G999D00'), ',', 'X'), '.', ','), 'X', '.') AS litrossalida,
-  NULL::numeric AS stock
-FROM abastecimiento a
-JOIN chofer c ON a.choferid = c.choferid
-JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-
+FROM movimientos
 ORDER BY fechatransaccion;
+
 
 
 
