@@ -273,16 +273,24 @@ app.post('/api/recarga-stock', async (req, res) => {
   }
 
   try {
-    // Insertar la recarga
+    // Registrar la recarga
     await pool.query(
       'INSERT INTO recargastock (cantlitros, choferid, fecha) VALUES ($1, $2, $3)',
       [cantlitros, choferid, fecha]
     );
 
-    // Actualizar el stock
+    // Obtener último stock actual
+    const { rows } = await pool.query(
+      'SELECT litroactual FROM stockcombustible ORDER BY stockcombustibleid DESC LIMIT 1'
+    );
+
+    const ultimoStock = rows[0]?.litroactual || 0;
+    const nuevoStock = parseFloat(ultimoStock) + parseFloat(cantlitros);
+
+    // Insertar nuevo stock actualizado
     await pool.query(
-      'UPDATE stockcombustible SET cantidad = cantidad + $1',
-      [cantlitros]
+      'INSERT INTO stockcombustible (fechatransaccion, litroactual) VALUES ($1, $2)',
+      [fecha, nuevoStock]
     );
 
     res.status(201).json({ mensaje: 'Recarga registrada correctamente' });
@@ -291,6 +299,7 @@ app.post('/api/recarga-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al registrar recarga' });
   }
 });
+
 
 
 
