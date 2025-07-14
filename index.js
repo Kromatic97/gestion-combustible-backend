@@ -310,10 +310,10 @@ app.get('/api/historial-stock', async (req, res) => {
 SELECT 
   r.fecha AS fechatransaccion,
   'Recarga' AS tipo,
-  NULL AS vehiculo,
+  '' AS vehiculo,
   NULL AS kilometraje,
   c.nombre AS chofer,
-  TO_CHAR(r.cantlitros, 'FM999G999G999D00') AS litrosentrada,
+  TO_CHAR(r.cantlitros, 'FM999G999D00') AS litrosentrada,
   NULL AS litrossalida,
   NULL AS stock
 FROM recargastock r
@@ -328,15 +328,13 @@ SELECT
   a.kilometrajeactual AS kilometraje,
   c.nombre AS chofer,
   NULL AS litrosentrada,
-  TO_CHAR(a.cant_litros, 'FM999G999G999D00') AS litrossalida,
+  TO_CHAR(a.cant_litros, 'FM999G999D00') AS litrossalida,
   NULL AS stock
 FROM abastecimiento a
 JOIN chofer c ON a.choferid = c.choferid
 JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
 
 ORDER BY fechatransaccion;
-
-
 
 
     `);
