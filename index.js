@@ -266,23 +266,23 @@ app.post('/api/choferes', async (req, res) => {
 // Registrar recarga de stock
 // ============================
 app.post('/api/recarga-stock', async (req, res) => {
-  const { cantidad, choferid } = req.body;
+  const { cantlitros, choferid, fecha } = req.body;
 
-  if (!cantidad || !choferid) {
+  if (!cantlitros || !choferid || !fecha) {
     return res.status(400).json({ error: 'Faltan datos para la recarga' });
   }
 
   try {
     // Insertar la recarga
     await pool.query(
-      'INSERT INTO recargastock (cantidad, choferid, fecha) VALUES ($1, $2, NOW())',
-      [cantidad, choferid]
+      'INSERT INTO recargastock (cantlitros, choferid, fecha) VALUES ($1, $2, $3)',
+      [cantlitros, choferid, fecha]
     );
 
-    // Actualizar stock actual
+    // Actualizar el stock
     await pool.query(
       'UPDATE stockcombustible SET cantidad = cantidad + $1',
-      [cantidad]
+      [cantlitros]
     );
 
     res.status(201).json({ mensaje: 'Recarga registrada correctamente' });
@@ -291,6 +291,7 @@ app.post('/api/recarga-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al registrar recarga' });
   }
 });
+
 
 
 
