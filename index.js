@@ -307,10 +307,10 @@ app.post('/api/recarga-stock', async (req, res) => {
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-  SELECT 
+SELECT 
   r.fecha AS fechatransaccion,
   'Recarga' AS tipo,
-  '' AS vehiculo,
+  NULL AS vehiculo,
   NULL AS kilometraje,
   c.nombre AS chofer,
   TO_CHAR(r.cantlitros, 'FM999G999G999D00') AS litrosentrada,
@@ -325,7 +325,7 @@ SELECT
   a.fecha AS fechatransaccion,
   'Abastecimiento' AS tipo,
   v.denominacion AS vehiculo,
-  TO_CHAR(a.kilometrajeactual, 'FM999G999G999D00') AS kilometraje,
+  a.kilometrajeactual AS kilometraje,
   c.nombre AS chofer,
   NULL AS litrosentrada,
   TO_CHAR(a.cant_litros, 'FM999G999G999D00') AS litrossalida,
@@ -335,6 +335,7 @@ JOIN chofer c ON a.choferid = c.choferid
 JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
 
 ORDER BY fechatransaccion;
+
 
 
 
