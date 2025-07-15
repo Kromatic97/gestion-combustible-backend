@@ -359,6 +359,68 @@ app.get('/api/historial-stock', async (req, res) => {
 });
 
 
+// ============================
+// GET HISTORIAL FILTRADO
+// ============================
+
+app.get('/api/historial-stock-filtrado', async (req, res) => {
+  const { choferid, vehiculoid } = req.query;
+
+  try {
+    const { rows } = await pool.query(`
+      WITH movimientos AS (
+        SELECT 
+          r.fecha AS fechatransaccion,
+          'Recarga' AS tipo,
+          '-' AS vehiculo,
+          '-' AS kilometraje,
+          c.nombre AS chofer,
+          r.cantlitros AS litrosentrada,
+          0::numeric AS litrossalida,
+          c.choferid,
+          NULL::int AS vehiculoid
+        FROM recargastock r
+        JOIN chofer c ON r.choferid = c.choferid
+
+        UNION ALL
+
+        SELECT 
+          a.fecha AS fechatransaccion,
+          'Abastecimiento' AS tipo,
+          v.denominacion AS vehiculo,
+          a.kilometrajeactual::text AS kilometraje,
+          c.nombre AS chofer,
+          0::numeric AS litrosentrada,
+          a.cant_litros AS litrossalida,
+          c.choferid,
+          v.vehiculoid
+        FROM abastecimiento a
+        JOIN chofer c ON a.choferid = c.choferid
+        JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+      )
+
+      SELECT 
+        fechatransaccion,
+        tipo,
+        vehiculo,
+        kilometraje,
+        chofer,
+        litrosentrada,
+        litrossalida,
+        SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion) AS stock
+      FROM movimientos
+      WHERE 
+        ($1::int IS NULL OR choferid = $1::int)
+        AND ($2::int IS NULL OR vehiculoid = $2::int)
+      ORDER BY fechatransaccion;
+    `, [choferid || null, vehiculoid || null]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al cargar historial filtrado:', error);
+    res.status(500).json({ error: 'Error al cargar historial filtrado' });
+  }
+});
 
 
 
