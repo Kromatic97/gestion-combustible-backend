@@ -301,7 +301,11 @@ app.post('/api/recarga-stock', async (req, res) => {
 });
 
 // ============================
-// GET HISTORI
+// GET HISTORICO
+// ============================
+
+// ============================
+// GET HISTORICO
 // ============================
 
 app.get('/api/historial-stock', async (req, res) => {
@@ -314,7 +318,7 @@ app.get('/api/historial-stock', async (req, res) => {
           '-' AS vehiculo,
           '-' AS kilometraje,
           c.nombre AS chofer,
-          r.cantlitros::numeric AS litrosentrada,
+          r.cantlitros AS litrosentrada,
           0::numeric AS litrossalida
         FROM recargastock r
         JOIN chofer c ON r.choferid = c.choferid
@@ -328,7 +332,7 @@ app.get('/api/historial-stock', async (req, res) => {
           a.kilometrajeactual::text AS kilometraje,
           c.nombre AS chofer,
           0::numeric AS litrosentrada,
-          a.cant_litros::numeric AS litrossalida
+          a.cant_litros AS litrossalida
         FROM abastecimiento a
         JOIN chofer c ON a.choferid = c.choferid
         JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
@@ -340,24 +344,9 @@ app.get('/api/historial-stock', async (req, res) => {
         vehiculo,
         kilometraje,
         chofer,
-        -- ✅ Entrada formateada
-        CASE 
-          WHEN litrosentrada > 0 THEN TO_CHAR(litrosentrada, 'FM999G999D00')
-          ELSE '-' 
-        END AS entrada,
-
-        -- ✅ Salida formateada
-        CASE 
-          WHEN litrossalida > 0 THEN TO_CHAR(litrossalida, 'FM999G999D00')
-          ELSE '-' 
-        END AS salida,
-
-        -- ✅ Stock acumulado con formato
-        TO_CHAR(
-          SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion)::numeric,
-          'FM999G999D00'
-        ) AS stock
-
+        litrosentrada,
+        litrossalida,
+        SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion) AS stock
       FROM movimientos
       ORDER BY fechatransaccion;
     `);
@@ -368,6 +357,7 @@ app.get('/api/historial-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al cargar historial' });
   }
 });
+
 
 
 
