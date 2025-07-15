@@ -98,7 +98,10 @@ app.get('/api/stock', async (req, res) => {
       ORDER BY FechaTransaccion DESC
       LIMIT 1
     `);
-    res.json(result.rows[0] || { litroactual: 0 });
+   if (result.rows.length === 0) {
+  return res.status(404).json({ error: 'No hay registros de stock aún.' });
+}
+res.json(result.rows[0]);
   } catch (error) {
     console.error('Error al obtener stock:', error);
     res.status(500).json({ error: 'Error al obtener stock' });
