@@ -307,59 +307,47 @@ app.post('/api/recarga-stock', async (req, res) => {
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-     WITH movimientos AS (
-  SELECT 
-    s.fechatransaccion AS fechatransaccion,
-    'Stock inicial' AS tipo,
-    '-' AS vehiculo,
-    '-' AS kilometraje,
-    '-' AS chofer,
-    s.litroactual AS litrosentrada,
-    0::numeric AS litrossalida
-  FROM stockcombustible s
-  ORDER BY s.fechatransaccion
-  LIMIT 1
+      WITH movimientos AS (
+        SELECT 
+          r.fecha AS fechatransaccion,
+          'Recarga' AS tipo,
+          '-' AS vehiculo,
+          '-' AS kilometraje,
+          c.nombre AS chofer,
+          r.cantlitros AS litrosentrada,
+          0::numeric AS litrossalida
+        FROM recargastock r
+        JOIN chofer c ON r.choferid = c.choferid
 
-  UNION ALL
+        UNION ALL
 
-  SELECT 
-    r.fecha AS fechatransaccion,
-    'Recarga' AS tipo,
-    '-' AS vehiculo,
-    '-' AS kilometraje,
-    c.nombre AS chofer,
-    r.cantlitros AS litrosentrada,
-    0::numeric AS litrossalida
-  FROM recargastock r
-  JOIN chofer c ON r.choferid = c.choferid
+        SELECT 
+          a.fecha AS fechatransaccion,
+          'Abastecimiento' AS tipo,
+          v.denominacion AS vehiculo,
+          a.kilometrajeactual::text AS kilometraje,
+          c.nombre AS chofer,
+          0::numeric AS litrosentrada,
+          a.cant_litros AS litrossalida
+        FROM abastecimiento a
+        JOIN chofer c ON a.choferid = c.choferid
+        JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
+      )
 
-  UNION ALL
-
-  SELECT 
-    a.fecha AS fechatransaccion,
-    'Abastecimiento' AS tipo,
-    v.denominacion AS vehiculo,
-    a.kilometrajeactual::text AS kilometraje,
-    c.nombre AS chofer,
-    0::numeric AS litrosentrada,
-    a.cant_litros AS litrossalida
-  FROM abastecimiento a
-  JOIN chofer c ON a.choferid = c.choferid
-  JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-)
-
-SELECT 
-  fechatransaccion,
-  tipo,
-  vehiculo,
-  kilometraje,
-  chofer,
-  litrosentrada,
-  litrossalida,
-  SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS stock
-FROM movimientos
-ORDER BY fechatransaccion;
-
+      SELECT 
+        fechatransaccion,
+        tipo,
+        vehiculo,
+        kilometraje,
+        chofer,
+        litrosentrada,
+        litrossalida,
+        SUM(litrosentrada - litrossalida) OVER (
+          ORDER BY fechatransaccion 
+          ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS stock
+      FROM movimientos
+      ORDER BY fechatransaccion;
     `);
 
     res.json(rows);
@@ -368,6 +356,7 @@ ORDER BY fechatransaccion;
     res.status(500).json({ error: 'Error al cargar historial' });
   }
 });
+
 
 
 
