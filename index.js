@@ -342,7 +342,7 @@ app.get('/api/historial-stock', async (req, res) => {
         chofer,
         litrosentrada,
         litrossalida,
-        SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion) AS stock
+        SUM(litrosentrada - litrossalida) OVER (ORDER BY fechatransaccion ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS stock
       FROM movimientos
       ORDER BY fechatransaccion;
     `);
@@ -353,6 +353,7 @@ app.get('/api/historial-stock', async (req, res) => {
     res.status(500).json({ error: 'Error al cargar historial' });
   }
 });
+
 
 
 // ============================
