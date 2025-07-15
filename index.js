@@ -98,7 +98,7 @@ app.get('/api/stock', async (req, res) => {
       ORDER BY FechaTransaccion DESC
       LIMIT 1
     `);
-    res.json(result.rows[0] || { litroactual: 10000 });
+    res.json(result.rows[0] || { litroactual: 0 });
   } catch (error) {
     console.error('Error al obtener stock:', error);
     res.status(500).json({ error: 'Error al obtener stock' });
@@ -168,7 +168,7 @@ app.post('/api/abastecimientos', async (req, res) => {
       mensaje: 'Abastecimiento registrado correctamente',
       abastecimientoID,
       nuevoStock,
-      alarma: nuevoStock <= 1500
+      alarma: nuevoStock <= 500
     });
   } catch (error) {
     await client.query('ROLLBACK');
