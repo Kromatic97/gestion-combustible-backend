@@ -434,7 +434,7 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
         a.abastecimientoid,
         a.fecha,
         v.denominacion AS vehiculo,
-        c.nombre AS chofer,
+        c.nombre AS chofer,git 
         a.cant_litros,
         a.kilometrajeactual,
         l.nombrelugar AS lugar
