@@ -424,33 +424,28 @@ app.get('/api/historial-stock-filtrado', async (req, res) => {
 app.get('/api/abastecimientos-rango', async (req, res) => {
   const { desde, hasta } = req.query;
 
-  if (!desde || !hasta) {
-    return res.status(400).json({ error: 'Faltan fechas en la consulta' });
-  }
-
   try {
-    const result = await pool.query(`SELECT 
-        a.abastecimientoid,
-        a.fecha,
-        v.denominacion AS vehiculo,
-        c.nombre AS chofer,git 
-        a.cant_litros,
-        a.kilometrajeactual,
-        l.nombrelugar AS lugar
-      FROM abastecimiento a
-      JOIN vehiculo v ON a.vehiculoid = v.vehiculoid
-      JOIN chofer c ON a.choferid = c.choferid
-      JOIN lugar l ON a.lugarid = l.lugarid
-      WHERE a.fecha::date BETWEEN $1::date AND $2::date
-      ORDER BY a.fecha
+    const result = await pool.query(`
+      SELECT 
+        a.*,
+        v.Denominacion AS vehiculo,
+        c.Nombre AS chofer,
+        l.NombreLugar AS lugar
+      FROM Abastecimiento a
+      JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
+      JOIN Chofer c ON c.ChoferID = a.ChoferID
+      JOIN Lugar l ON l.LugarID = a.LugarID
+      WHERE a.Fecha BETWEEN $1 AND $2
+      ORDER BY a.Fecha
     `, [desde, hasta]);
 
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener abastecimientos por fecha:', error);
-    res.status(500).json({ error: 'Error al consultar abastecimientos' });
+    res.status(500).json({ error: 'Error al obtener abastecimientos por fecha' });
   }
 });
+
 
 /* ============================
    Iniciar servidor
