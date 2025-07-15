@@ -429,8 +429,7 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
   }
 
   try {
-    const result = await pool.query(`
-      SELECT 
+    const result = await pool.query(`SELECT 
         a.abastecimientoid,
         a.fecha,
         v.denominacion AS vehiculo,
@@ -452,13 +451,6 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
     res.status(500).json({ error: 'Error al consultar abastecimientos' });
   }
 });
-
-
-
-
-
-
-
 
 /* ============================
    Iniciar servidor
