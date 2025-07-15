@@ -304,10 +304,6 @@ app.post('/api/recarga-stock', async (req, res) => {
 // GET HISTORICO
 // ============================
 
-// ============================
-// GET HISTORICO
-// ============================
-
 app.get('/api/historial-stock', async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -422,6 +418,37 @@ app.get('/api/historial-stock-filtrado', async (req, res) => {
   }
 });
 
+// ============================
+// GET: Historial por rango de fechas
+// ============================
+app.get('/api/abastecimientos-rango', async (req, res) => {
+  const { desde, hasta } = req.query;
+
+  if (!desde || !hasta) {
+    return res.status(400).json({ error: 'Faltan parámetros desde/hasta' });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.*,
+        v.Denominacion AS Vehiculo,
+        c.nombre AS Chofer,
+        l.NombreLugar AS Lugar
+      FROM Abastecimiento a
+      JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
+      JOIN Chofer c ON c.ChoferID = a.ChoferID
+      JOIN Lugar l ON l.LugarID = a.LugarID
+      WHERE a.Fecha BETWEEN $1 AND $2
+      ORDER BY a.Fecha ASC
+    `, [desde, hasta]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al consultar historial por fecha:', error);
+    res.status(500).json({ error: 'Error al consultar historial por fecha' });
+  }
+});
 
 
 
