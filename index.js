@@ -432,6 +432,10 @@ app.get('/api/historial-stock-filtrado', async (req, res) => {
 app.get('/api/abastecimientos-rango', async (req, res) => {
   const { desde, hasta } = req.query;
 
+  if (!desde || !hasta) {
+    return res.status(400).json({ error: 'Parámetros desde y hasta son requeridos' });
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -453,6 +457,7 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener abastecimientos por fecha' });
   }
 });
+
 
 
 /* ============================
