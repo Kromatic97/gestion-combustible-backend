@@ -474,7 +474,7 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         v.Denominacion AS vehiculo,
-        SUM(a.CantLitros) AS litros_total
+        SUM(a.Cant_Litros) AS litros_total
       FROM Abastecimiento a
       JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
       WHERE EXTRACT(YEAR FROM a.Fecha) = $1
