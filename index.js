@@ -463,10 +463,8 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
 // ============================
 app.get('/api/dashboard/top-vehiculos', async (req, res) => {
   const { anio, mes } = req.query;
-  const anioNum = parseInt(anio);
-  const mesNum = parseInt(mes);
 
-  if (!anioNum || !mesNum) {
+  if (!anio || !mes) {
     return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
   }
 
@@ -474,7 +472,7 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         v.Denominacion AS vehiculo,
-        SUM(a.Cant_Litros) AS litros_total
+        SUM(a.cant_litros) AS litros_total
       FROM Abastecimiento a
       JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
       WHERE EXTRACT(YEAR FROM a.Fecha) = $1
@@ -482,7 +480,7 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
       GROUP BY v.Denominacion
       ORDER BY litros_total DESC
       LIMIT 10
-    `, [anioNum, mesNum]);
+    `, [anio, mes]);
 
     res.json(result.rows);
   } catch (error) {
@@ -493,25 +491,24 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
 
 
 
+
 // ============================
 // GET: Total de litros cargados este mes
 // ============================
 app.get('/api/dashboard/total-litros-mes', async (req, res) => {
   const { anio, mes } = req.query;
-  const anioNum = parseInt(anio);
-  const mesNum = parseInt(mes);
 
-  if (!anioNum || !mesNum) {
+  if (!anio || !mes) {
     return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
   }
 
   try {
     const result = await pool.query(`
-      SELECT SUM(a.CantLitros)::numeric(10,2) AS total_litros
+      SELECT SUM(a.cant_litros)::numeric(10,2) AS total_litros
       FROM Abastecimiento a
       WHERE EXTRACT(YEAR FROM a.Fecha) = $1
         AND EXTRACT(MONTH FROM a.Fecha) = $2
-    `, [anioNum, mesNum]);
+    `, [anio, mes]);
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -521,16 +518,15 @@ app.get('/api/dashboard/total-litros-mes', async (req, res) => {
 });
 
 
+
 // ============================
 // GET:Consumo diario últimos 30 días
 // ============================
 
 app.get('/api/dashboard/consumo-diario', async (req, res) => {
   const { anio, mes } = req.query;
-  const anioNum = parseInt(anio);
-  const mesNum = parseInt(mes);
 
-  if (!anioNum || !mesNum) {
+  if (!anio || !mes) {
     return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
   }
 
@@ -538,13 +534,13 @@ app.get('/api/dashboard/consumo-diario', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         TO_CHAR(a.Fecha, 'YYYY-MM-DD') AS dia,
-        SUM(a.CantLitros)::numeric(10,2) AS litros
+        SUM(a.cant_litros)::numeric(10,2) AS litros
       FROM Abastecimiento a
       WHERE EXTRACT(YEAR FROM a.Fecha) = $1
         AND EXTRACT(MONTH FROM a.Fecha) = $2
       GROUP BY dia
       ORDER BY dia
-    `, [anioNum, mesNum]);
+    `, [anio, mes]);
 
     res.json(result.rows);
   } catch (error) {
@@ -555,15 +551,14 @@ app.get('/api/dashboard/consumo-diario', async (req, res) => {
 
 
 
+
 // ============================
 // GET:Chofer que más abasteció este mes
 //============================
 app.get('/api/dashboard/top-chofer', async (req, res) => {
   const { anio, mes } = req.query;
-  const anioNum = parseInt(anio);
-  const mesNum = parseInt(mes);
 
-  if (!anioNum || !mesNum) {
+  if (!anio || !mes) {
     return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
   }
 
@@ -571,7 +566,7 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         c.Nombre AS chofer,
-        SUM(a.CantLitros)::numeric(10,2) AS litros_total
+        SUM(a.cant_litros)::numeric(10,2) AS litros_total
       FROM Abastecimiento a
       JOIN Chofer c ON c.ChoferID = a.ChoferID
       WHERE EXTRACT(YEAR FROM a.Fecha) = $1
@@ -579,7 +574,7 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
       GROUP BY c.Nombre
       ORDER BY litros_total DESC
       LIMIT 1
-    `, [anioNum, mesNum]);
+    `, [anio, mes]);
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -587,6 +582,7 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener chofer que más abasteció' });
   }
 });
+
 
 
 
