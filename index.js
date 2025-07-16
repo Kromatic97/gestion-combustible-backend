@@ -462,6 +462,12 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
 // GET: Top 10 vehículos del mes
 // ============================
 app.get('/api/dashboard/top-vehiculos', async (req, res) => {
+  const { anio, mes } = req.query;
+
+  if (!anio || !mes) {
+    return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -469,11 +475,13 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
         SUM(a.CantLitros) AS litros_total
       FROM Abastecimiento a
       JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
-      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
+      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
+        AND EXTRACT(MONTH FROM a.Fecha) = $2
       GROUP BY v.Denominacion
       ORDER BY litros_total DESC
       LIMIT 10
-    `);
+    `, [anio, mes]);
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error en top-vehiculos:', error);
@@ -481,17 +489,25 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
   }
 });
 
+
 // ============================
 // GET: Total de litros cargados este mes
 // ============================
 app.get('/api/dashboard/total-litros-mes', async (req, res) => {
+  const { anio, mes } = req.query;
+
+  if (!anio || !mes) {
+    return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
+  }
+
   try {
     const result = await pool.query(`
-      SELECT 
-        SUM(a.CantLitros)::numeric(10,2) AS total_litros
+      SELECT SUM(a.CantLitros)::numeric(10,2) AS total_litros
       FROM Abastecimiento a
-      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
-    `);
+      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
+        AND EXTRACT(MONTH FROM a.Fecha) = $2
+    `, [anio, mes]);
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error en total-litros-mes:', error);
@@ -499,21 +515,30 @@ app.get('/api/dashboard/total-litros-mes', async (req, res) => {
   }
 });
 
+
 // ============================
 // GET:Consumo diario últimos 30 días
 // ============================
 
 app.get('/api/dashboard/consumo-diario', async (req, res) => {
+  const { anio, mes } = req.query;
+
+  if (!anio || !mes) {
+    return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
         TO_CHAR(a.Fecha, 'YYYY-MM-DD') AS dia,
         SUM(a.CantLitros)::numeric(10,2) AS litros
       FROM Abastecimiento a
-      WHERE a.Fecha >= CURRENT_DATE - INTERVAL '30 days'
+      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
+        AND EXTRACT(MONTH FROM a.Fecha) = $2
       GROUP BY dia
       ORDER BY dia
-    `);
+    `, [anio, mes]);
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error en consumo-diario:', error);
@@ -521,10 +546,17 @@ app.get('/api/dashboard/consumo-diario', async (req, res) => {
   }
 });
 
+
 // ============================
 // GET:Chofer que más abasteció este mes
 //============================
 app.get('/api/dashboard/top-chofer', async (req, res) => {
+  const { anio, mes } = req.query;
+
+  if (!anio || !mes) {
+    return res.status(400).json({ error: 'Se requieren los parámetros anio y mes' });
+  }
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -532,17 +564,20 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
         SUM(a.CantLitros)::numeric(10,2) AS litros_total
       FROM Abastecimiento a
       JOIN Chofer c ON c.ChoferID = a.ChoferID
-      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
+      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
+        AND EXTRACT(MONTH FROM a.Fecha) = $2
       GROUP BY c.Nombre
       ORDER BY litros_total DESC
       LIMIT 1
-    `);
+    `, [anio, mes]);
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error en top-chofer:', error);
     res.status(500).json({ error: 'Error al obtener chofer que más abasteció' });
   }
 });
+
 
 
 /* ============================
