@@ -458,6 +458,91 @@ app.get('/api/abastecimientos-rango', async (req, res) => {
   }
 });
 
+// ============================
+// GET: Top 10 vehículos del mes
+// ============================
+app.get('/api/dashboard/top-vehiculos', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        v.Denominacion AS vehiculo,
+        SUM(a.CantLitros) AS litros_total
+      FROM Abastecimiento a
+      JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
+      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
+      GROUP BY v.Denominacion
+      ORDER BY litros_total DESC
+      LIMIT 10
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error en top-vehiculos:', error);
+    res.status(500).json({ error: 'Error al obtener los vehículos que más cargaron' });
+  }
+});
+
+// ============================
+// GET: Total de litros cargados este mes
+// ============================
+app.get('/api/dashboard/total-litros-mes', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        SUM(a.CantLitros)::numeric(10,2) AS total_litros
+      FROM Abastecimiento a
+      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
+    `);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error en total-litros-mes:', error);
+    res.status(500).json({ error: 'Error al calcular litros totales del mes' });
+  }
+});
+
+// ============================
+// GET:Consumo diario últimos 30 días
+// ============================
+
+app.get('/api/dashboard/consumo-diario', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        TO_CHAR(a.Fecha, 'YYYY-MM-DD') AS dia,
+        SUM(a.CantLitros)::numeric(10,2) AS litros
+      FROM Abastecimiento a
+      WHERE a.Fecha >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY dia
+      ORDER BY dia
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error en consumo-diario:', error);
+    res.status(500).json({ error: 'Error al obtener consumo diario' });
+  }
+});
+
+// ============================
+// GET:Chofer que más abasteció este mes
+//============================
+app.get('/api/dashboard/top-chofer', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        c.Nombre AS chofer,
+        SUM(a.CantLitros)::numeric(10,2) AS litros_total
+      FROM Abastecimiento a
+      JOIN Chofer c ON c.ChoferID = a.ChoferID
+      WHERE DATE_TRUNC('month', a.Fecha) = DATE_TRUNC('month', CURRENT_DATE)
+      GROUP BY c.Nombre
+      ORDER BY litros_total DESC
+      LIMIT 1
+    `);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error en top-chofer:', error);
+    res.status(500).json({ error: 'Error al obtener chofer que más abasteció' });
+  }
+});
 
 
 /* ============================
