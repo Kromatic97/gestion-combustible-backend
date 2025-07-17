@@ -475,8 +475,8 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
         SUM(a.cant_litros) AS litros_total
       FROM Abastecimiento a
       JOIN Vehiculo v ON v.VehiculoID = a.VehiculoID
-      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
-        AND EXTRACT(MONTH FROM a.Fecha) = $2
+      WHERE a.Fecha >= make_date($1, $2, 1)
+        AND a.Fecha < make_date($1, $2, 1) + interval '1 month'
       GROUP BY v.Denominacion
       ORDER BY litros_total DESC
       LIMIT 10
@@ -488,8 +488,6 @@ app.get('/api/dashboard/top-vehiculos', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los vehículos que más cargaron' });
   }
 });
-
-
 
 
 // ============================
@@ -506,8 +504,8 @@ app.get('/api/dashboard/total-litros-mes', async (req, res) => {
     const result = await pool.query(`
       SELECT SUM(a.cant_litros)::numeric(10,2) AS total_litros
       FROM Abastecimiento a
-      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
-        AND EXTRACT(MONTH FROM a.Fecha) = $2
+      WHERE a.Fecha >= make_date($1, $2, 1)
+        AND a.Fecha < make_date($1, $2, 1) + interval '1 month'
     `, [anio, mes]);
 
     res.json(result.rows[0]);
@@ -518,11 +516,9 @@ app.get('/api/dashboard/total-litros-mes', async (req, res) => {
 });
 
 
-
 // ============================
-// GET:Consumo diario últimos 30 días
+// GET: Consumo diario del mes
 // ============================
-
 app.get('/api/dashboard/consumo-diario', async (req, res) => {
   const { anio, mes } = req.query;
 
@@ -536,8 +532,8 @@ app.get('/api/dashboard/consumo-diario', async (req, res) => {
         TO_CHAR(a.Fecha, 'YYYY-MM-DD') AS dia,
         SUM(a.cant_litros)::numeric(10,2) AS litros
       FROM Abastecimiento a
-      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
-        AND EXTRACT(MONTH FROM a.Fecha) = $2
+      WHERE a.Fecha >= make_date($1, $2, 1)
+        AND a.Fecha < make_date($1, $2, 1) + interval '1 month'
       GROUP BY dia
       ORDER BY dia
     `, [anio, mes]);
@@ -550,11 +546,9 @@ app.get('/api/dashboard/consumo-diario', async (req, res) => {
 });
 
 
-
-
 // ============================
-// GET:Chofer que más abasteció este mes
-//============================
+// GET: Chofer que más abasteció este mes
+// ============================
 app.get('/api/dashboard/top-chofer', async (req, res) => {
   const { anio, mes } = req.query;
 
@@ -569,8 +563,8 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
         SUM(a.cant_litros)::numeric(10,2) AS litros_total
       FROM Abastecimiento a
       JOIN Chofer c ON c.ChoferID = a.ChoferID
-      WHERE EXTRACT(YEAR FROM a.Fecha) = $1
-        AND EXTRACT(MONTH FROM a.Fecha) = $2
+      WHERE a.Fecha >= make_date($1, $2, 1)
+        AND a.Fecha < make_date($1, $2, 1) + interval '1 month'
       GROUP BY c.Nombre
       ORDER BY litros_total DESC
       LIMIT 1
@@ -582,6 +576,7 @@ app.get('/api/dashboard/top-chofer', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener chofer que más abasteció' });
   }
 });
+
 
 
 
